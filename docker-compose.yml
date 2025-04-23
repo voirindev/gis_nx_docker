@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # container for the flask api
+  # this container is used to serve the api
+  flask:
+    build:
+      context: ./flask
+      dockerfile: Dockerfile
+    container_name: flask_api
+    volumes:
+      - ./flask:/app
+      - ./data:/data
+      - ./logs:/app/logs
+    environment:
+      - DATA_ADDRESS=/data/Adresses.geojson
+      - DATA_STREETS=/data/Segments_de_rue.shp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  # container for the web server
+  # this container is used to serve the web application
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./web:/usr/share/nginx/html:ro
+    depends_on:
+      - flask
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
